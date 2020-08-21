@@ -25,18 +25,51 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/members', methods=['GET'])
-def handle_hello():
+@app.route('/members', methods=['GET', 'POST', 'DELETE', 'PUT'])
+@app.route('/members/<int:member_id>', methods=['GET', 'POST', 'DELETE', 'PUT'])
+def members(member_id=None):
 
+    if request.method == "GET":
+        if member_id is None:
+            return jsonify(jackson_family.get_all_members()), 200
+
+        else:
+            jack = jackson_family.get_member(member_id)
+            if not jack:
+                return jsonify({"msg":"this ID not exist"}), 400
+            return jsonify(jack), 200
+
+
+    elif request.method == "POST":
+        idd = jackson_family._generateId()
+        name = request.json.get("name", "")
+        if not name:
+            return jsonify({"msg": "name is required"}), 400
+        new_member = {
+            "id": idd,
+            "first_name": name,
+            "last_name": "Jackson"
+        }
+        add = jackson_family.add_member(new_member)
+        return jsonify(jackson_family.get_all_members()), 200
+
+
+    elif request.method == "DELETE":
+        jack = jackson_family.delete_member(member_id)
+        if not jack:
+            return jsonify({"msg":"this ID not exist"}), 400
+        return jsonify(jackson_family.get_all_members()), 200
+    
+
+@app.route("/example", methods=["GET","POST"])
+def example():
     # this is how you can use the Family datastructure by calling its methods
     members = jackson_family.get_all_members()
     response_body = {
         "hello": "world",
         "family": members
     }
-
-
-    return jsonify(response_body), 200
+    return jsonify(members), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
